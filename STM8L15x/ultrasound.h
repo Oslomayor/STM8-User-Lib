@@ -23,6 +23,8 @@
 /* 操作 PMOS, 暂时不能加，改好MOS管才能用 */
 #define ultrasound_on()   GPIO_WriteBit(GPIOE,GPIO_Pin_0,RESET)
 #define ultrasound_off()  GPIO_WriteBit(GPIOE,GPIO_Pin_0,SET)
+/* 宏定义，取平均值的次数 */
+#define AVGTIMES 5
 
 /* variable ------------------------------------------------------------------*/
 extern uint16_t ultrasound_buff[4];

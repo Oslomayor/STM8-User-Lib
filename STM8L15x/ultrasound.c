@@ -16,20 +16,34 @@ uint16_t ultrasound_buff[4];
 uint8_t ultrasound_flag;
 
 
-/* 取5次超声波测距结果的平均值 */
+/* 取多次超声波测距结果的平均值 */
 uint16_t get_avg_distance()
 {
-  uint16_t data[5];
+  uint16_t data[AVGTIMES];
   uint8_t  i,j;
-  uint16_t avg,temp;
+  uint16_t avg = 0,temp;
+  uint8_t timeout;
   
-  /* 启动5次超声波测距 */
-  for(i=0;i<5;i++)
+  /* 启动 AVGTIMES 次超声波测距，宏定义在 ultrasound.h 中 */
+  for(i=0;i<AVGTIMES;i++)
+  {
+    timeout = 0;
+    /* 进行一次超声波测距 */
     data[i] = get_one_distance();
+    /* 若果测试结果为空，重新测量，超出10次为空跳过 */
+    while(data[i] == 0 && timeout < 10) 
+    {
+      data[i] = get_one_distance();
+      timeout++;
+    }
+    
+    /* 留出超声波模块反应时间，延时小于500ms不稳定 */
+    delay_ms(800);
+  }
   
   /* 冒泡排序，从小到大排列 */
-  for(i=0;i<4;i++)
-    for(j=0;j<4-i;j++)
+  for(i=0;i<AVGTIMES-1;i++)
+    for(j=0;j<AVGTIMES-1-i;j++)
     {
       if(data[j]>data[j+1])
       {
@@ -40,23 +54,25 @@ uint16_t get_avg_distance()
     }
   
   /* 去掉最大和最小，取平均值 */
-  avg = (data[1]+data[2]+data[3])/3;
+  for(i=1;i<AVGTIMES-1;i++)
+    avg = avg + data[i];
   
+  avg = avg/(AVGTIMES-2);
   return avg;  
 }
 
 
-/* 取一次超声波测距结果 */
+/* 返回一次超声波测距结果 */
 uint16_t get_one_distance()
 {
-  uint16_t distance;
+  uint16_t distance = 0;
   uint8_t i;
   
   /* UART1 发送 0x01 触发超声波模块启动测量 */
-  //USART_SendData8(USART1,0x01);
+  USART_SendData8(USART1,0x01);
   
-  /* 这里需要调节延时，大于超声波模块单次响应时间 */
-  delay_ms(1);
+  /* 这里需要调节延时，大于超声波模块单次响应时间，延时小于75ms不稳定 */
+  delay_ms(100);
   
   if(ultrasound_flag == 1)
   {
@@ -66,10 +82,10 @@ uint16_t get_one_distance()
     {
       /* 超声波模块返回4个8位数据, 第2个是距离高8位，第3个是距离低8位 */
       /* 两个8位数据合成距离，单位是毫米 */
-      /* 为什么左移8位结果不对，跟乘以256不是一样吗 */
       distance = ultrasound_buff[1]*256 + ultrasound_buff[2];
+      /*完成一次测量对缓存区清零*/
       for(i=0;i<4;i++)
-        ultrasound_buff[0] = 0;
+        ultrasound_buff[i] = 0x00;
     }
   }
   else 
