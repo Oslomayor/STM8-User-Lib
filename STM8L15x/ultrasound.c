@@ -3,10 +3,11 @@
   * @file    ultrasound.c
   * @author  Denis
   * @version V0
-  * @date    3-October-2018
+  * @date    5-October-2018
   * @github  Oslomayor
   * @brief   ultrasound configuration
-  *
+  * @ultrasound module 
+  *  https://item.taobao.com/item.htm?spm=a1z0d.6639537.1997196601.89.5b947484kZHk64&id=556599902719
   */
 
 #include "ultrasound.h"
